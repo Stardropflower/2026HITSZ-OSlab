@@ -19,7 +19,6 @@ extern void forkret(void);
 static void wakeup1(struct proc *chan);
 static void freeproc(struct proc *p);
 
-// Lab2 task 1: process state printed in lower case by exit_info().
 static char *state_name(enum procstate state) {
   switch (state) {
     case UNUSED:
@@ -355,17 +354,11 @@ void exit(int status) {
 
   acquire(&p->lock);
 
-  // Lab2 task 1: report the process being exited, its parent and all of its
-  // children.  This must be done *before* reparent() below: once the children
-  // have been handed over to init their ->parent points at init, and the
-  // parent/child relation at the moment of exit would be lost.
   exit_info("proc %d exit, parent pid %d, name %s, state %s\n", p->pid, original_parent->pid,
             original_parent->name, state_name(original_parent->state));
 
   int child_num = 0;
   for (struct proc *pp = proc; pp < &proc[NPROC]; pp++) {
-    // pp->parent is read without pp->lock on purpose, exactly like reparent()
-    // does; the only writer of pp->parent for our children is us.
     if (pp->parent == p) {
       acquire(&pp->lock);
       exit_info("proc %d exit, child %d, pid %d, name %s, state %s\n", p->pid, child_num, pp->pid,
@@ -393,8 +386,6 @@ void exit(int status) {
 
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
-// flags == 0: block until a child exits (original behaviour).
-// flags != 0: non-blocking, return -1 immediately if no zombie child exists.
 int wait(uint64 addr, int flags) {
   struct proc *np;
   int havekids, pid;
@@ -439,9 +430,6 @@ int wait(uint64 addr, int flags) {
       return -1;
     }
 
-    // Lab2 task 2: non-blocking wait.  There is no zombie child right now,
-    // so report that instead of going to sleep.  p->lock is still held here,
-    // it must be released before returning.
     if (flags != 0) {
       release(&p->lock);
       return -1;

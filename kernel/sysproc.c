@@ -7,7 +7,6 @@
 #include "spinlock.h"
 #include "proc.h"
 
-// Lab2 task 3: sys_yield() walks the global process table.
 extern struct proc proc[NPROC];
 
 uint64 sys_exit(void) {
@@ -25,7 +24,6 @@ uint64 sys_wait(void) {
   uint64 p;
   int flags;
   if (argaddr(0, &p) < 0) return -1;
-  // Lab2 task 2: second argument selects blocking (0) or non-blocking (!= 0).
   if (argint(1, &flags) < 0) return -1;
   return wait(p, flags);
 }
@@ -88,11 +86,6 @@ uint64 sys_rename(void) {
   return 0;
 }
 
-// Lab2 task 3: the yield() system call.
-// Reports where the kernel thread context gets saved, which process is running
-// right now, and which process the scheduler is likely to run next; then gives
-// up the CPU through the kernel's own yield().
-// NOTE: run yieldtest with CPUS=1, otherwise the output of the CPUs interleaves.
 uint64 sys_yield(void) {
   struct proc *p = myproc();
 
@@ -100,8 +93,6 @@ uint64 sys_yield(void) {
          &p->context, &p->context + 1);
   printf("Current running process pid is %d and user pc is %p\n", p->pid, p->trapframe->epc);
 
-  // Walk the process table starting right after p, the same way scheduler()
-  // does, and report the first RUNNABLE process found.
   for (int i = 1; i <= NPROC; i++) {
     struct proc *np = &proc[(p - proc + i) % NPROC];
     if (np == p) continue;
